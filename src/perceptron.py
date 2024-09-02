@@ -1,7 +1,8 @@
 from get_file import get_file
 import numpy as np
 import sys
-#np.set_printoptions(threshold=sys.maxsize) #uncomment to show entire np array
+
+# np.set_printoptions(threshold=sys.maxsize) #uncomment to show entire np array
 
 POSITIVE = "Y"
 NEGATIVE = "N"
@@ -72,63 +73,67 @@ def normalize(vector: np.array) -> np.array:
         vector[i] = vector[i] / magnitude
 
 
-def normalize_all(vectors: list) -> list:
+def normalize_all(vectors: list) -> None:
     """normalizes every vector in the passed list"""
     for vector in vectors:
         normalize(vector[0])
-    return vectors
+
+
+def get_sign(number: float) -> int:
+    """returns the sign of the given number"""
+    if number < 0:
+        return -1
+    return 1
 
 
 def perceptron(vectors: list) -> np.array:
-    """Calculating a vector w which is perpendicular to the line that divides the postive and negative labeled vectors"""
-    vectors = normalize_all(vectors)
-    w = [0] * 1024 #setting vector w to zero
-    w = np.array(w)
+    """Calculating a vector normal vector to the vector that divides the postive
+    and negative labeled vectors"""
 
-    v = 0
-    
-    while v < len(vectors):
-        """checking all the signs of the vectors until we hit a case where the signs are all correct
-        the loop will exit once all the signs on the vectors match the sign <w,current vector> """
-        
-        vector = vectors[v] #getting the tuple from the list at the current index
+    """Algorithm Description
+    1. start with a zero vector as the normal vector
+    2. check all vectors to find a vector where its dot product with
+        the normal vector has a different sign than intended
+        2a. if there exists one, add that vector, multiplied by its intended
+            sign to the normal vector and restart
+    3. if no more vectors exist that do not fit 2, output the normal vector as
+        it splits the 2 sets of vectors"""
+    # 1
+    normal_vector = np.array([0] * 1024)
+    for i in range(len(vectors)):
+        current_vector = vectors[i]
+        # 2
+        if current_vector[1] != get_sign(
+            np.dot(normal_vector, current_vector[0])
+        ):
+            # 2a
+            normal_vector = np.add(
+                normal_vector,
+                np.multiply(current_vector[1], current_vector[0]),
+            )
+            # needs to be -1 as will be incremented during loop operation
+            i = -1
+    # 3
+    return normal_vector
 
-        #calculates the sign from the dot product of the current w and the current vector in the list
-        sign = np.dot(w,vector[0]) 
-        if(sign >= 0):
-            sign = 1
-        else:
-            sign = -1
-        
-        #if the signs are not equal the w vector must be corrected
-        if(vector[1] != sign):
-            vector = (np.multiply(vector[1],vector[0]), vector[1]) #multiplying the vector by its scalar sign
-            w = np.add(w,vector[0]) #setting new w to the sum of old w and the current vector
-            v = 0 #going back to the beginning of the list to check all the vectors again
-        else:
-            v += 1
-    
-    margin = find_margin(vectors,w)
-    print("The margin is:")
-    print(margin)
-    return w
 
-def find_margin(vectors: list, w: np.array):
-    """Calculating the margin which is the minimum dot product between w and a vector"""
-    products = []
-
+def find_margin(vectors: list, normal_vector: np.array) -> float:
+    """Calculating the margin which is the minimum dot
+    product between the normal_vector and all vectors"""
+    min_dot_product = np.dot(normal_vector, vectors[0][0])
     for vector in vectors:
-        """finding the dot product of w and each vector
-        then adding the absoulte value of the dot product to the list of dot products"""
-        product = np.dot(w,vector[0])
-        products.append(abs(product))
+        dot_product = np.dot(normal_vector, vector[0])
+        min_dot_product = min(min_dot_product, dot_product)
+    return min_dot_product
 
-    return min(products) #returning the minimum dot product
 
 if __name__ == "__main__":
     relative_file_path = DEFAULT_FILE_PATH
     if len(sys.argv) >= 2:
         relative_file_path = sys.argv[1]
-    w = perceptron(read_file(relative_file_path))
-    print("The w vector is:")
-    print(w)
+    vectors = read_file(relative_file_path)
+    normalize_all(vectors)
+    normal_vector = perceptron(vectors)
+    margin = find_margin(vectors, normal_vector)
+    print(f"The normal vector that cuts the points is: {normal_vector}")
+    print(f"The margin of this vector is: {margin}")
