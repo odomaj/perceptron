@@ -2,11 +2,11 @@ from get_file import get_file
 import numpy as np
 import sys
 
-np.set_printoptions(threshold=sys.maxsize) #uncomment to show entire np array
 
 POSITIVE = "Y"
 NEGATIVE = "N"
-DEFAULT_FILE_PATH = "../data/train-a1-449.txt"
+DEFAULT_INPUT_FILE_PATH = "../data/train-a1-449.txt"
+DEFAULT_OUTPUT_FILE_PATH = "../data/output.txt"
 
 
 def get_array(strings: list) -> np.array:
@@ -67,16 +67,21 @@ def read_file(relative_path: str) -> tuple:
 
 
 def normalize(vector: np.array) -> np.array:
-    """normalizes the passed vector"""
-    magnitude = np.sqrt(np.dot(vector, vector))
-    for i in range(len(vector)):
-        vector[i] = vector[i] / magnitude
+    """returns the normalized form of the passed vector"""
+    normalized_vector = np.array(vector)
+    magnitude = np.sqrt(np.dot(normalized_vector, normalized_vector))
+    for i in range(len(normalized_vector)):
+        normalized_vector[i] = normalized_vector[i] / magnitude
+    return normalized_vector
 
 
-def normalize_all(vectors: list) -> None:
-    """normalizes every vector in the passed list"""
+def normalize_all(vectors: list) -> list:
+    """returns an identical list containing every vector
+    after being normalized in the passed list"""
+    normalized_vectors = []
     for vector in vectors:
-        normalize(vector[0])
+        normalized_vectors.append((normalize(vector[0]), vector[1]))
+    return normalized_vectors
 
 
 def get_sign(number: float) -> int:
@@ -100,7 +105,8 @@ def perceptron(vectors: list) -> np.array:
         it splits the 2 sets of vectors"""
     # 1
     normal_vector = np.array([0] * 1024)
-    for i in range(len(vectors)):
+    i = 0
+    while i < len(vectors):
         current_vector = vectors[i]
         # 2
         if current_vector[1] != get_sign(
@@ -111,34 +117,34 @@ def perceptron(vectors: list) -> np.array:
                 normal_vector,
                 np.multiply(current_vector[1], current_vector[0]),
             )
-            # needs to be -1 as will be incremented during loop operation, resets loop to recheck every point
-            i = -1
+            i = 0
+        else:
+            i += 1
     # 3
-    return normal_vector
+    return normalize(normal_vector)
 
 
 def find_margin(vectors: list, normal_vector: np.array) -> float:
     """Calculating the margin which is the minimum dot
     product between the normal_vector and all vectors"""
-    normalize(normal_vector)
     min_dot_product = np.dot(normal_vector, vectors[0][0])
     for vector in vectors:
-        dot_product = np.dot(normal_vector, vector[0])
+        dot_product = np.dot(normal_vector, vector[0]) * vector[1]
         min_dot_product = min(min_dot_product, dot_product)
     return min_dot_product
 
 
 if __name__ == "__main__":
-    relative_file_path = DEFAULT_FILE_PATH
+    input_file_path = DEFAULT_INPUT_FILE_PATH
+    output_file_path = DEFAULT_OUTPUT_FILE_PATH
     if len(sys.argv) >= 2:
-        relative_file_path = sys.argv[1]
-    vectors = read_file(relative_file_path)
-    normalize_all(vectors)
+        input_file_path = sys.argv[1]
+    vectors = normalize_all(read_file(input_file_path))
     normal_vector = perceptron(vectors)
     margin = find_margin(vectors, normal_vector)
     print(f"The normal vector that cuts the points is: {normal_vector}")
     print(f"The margin of this vector is: {margin}")
-    f = open("output.txt", "w")
-    content = str(normal_vector)
-    f.write(content)
-    f.close()
+
+    with get_file(output_file_path).open("w") as file:
+        for value in normal_vector:
+            file.write(f"{value} ")
