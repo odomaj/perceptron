@@ -29,6 +29,8 @@ def path_absolute(path: str) -> bool:
     if operating_system == "Darwin":
         print("[WARNING] absolute file paths not supported on Mac OS")
         return False
+    print("[WARNING] unsupported uperating system for absolute file path")
+    return False
 
 
 def get_file(path: str) -> Path:

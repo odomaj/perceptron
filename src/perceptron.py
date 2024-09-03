@@ -139,6 +139,8 @@ if __name__ == "__main__":
     output_file_path = DEFAULT_OUTPUT_FILE_PATH
     if len(sys.argv) >= 2:
         input_file_path = sys.argv[1]
+    elif len(sys.argv) >= 3:
+        output_file_path = sys.argv[2]
     vectors = normalize_all(read_file(input_file_path))
     normal_vector = perceptron(vectors)
     margin = find_margin(vectors, normal_vector)
