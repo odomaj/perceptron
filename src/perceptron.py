@@ -2,7 +2,7 @@ from get_file import get_file
 import numpy as np
 import sys
 
-# np.set_printoptions(threshold=sys.maxsize) #uncomment to show entire np array
+np.set_printoptions(threshold=sys.maxsize) #uncomment to show entire np array
 
 POSITIVE = "Y"
 NEGATIVE = "N"
@@ -111,7 +111,7 @@ def perceptron(vectors: list) -> np.array:
                 normal_vector,
                 np.multiply(current_vector[1], current_vector[0]),
             )
-            # needs to be -1 as will be incremented during loop operation
+            # needs to be -1 as will be incremented during loop operation, resets loop to recheck every point
             i = -1
     # 3
     return normal_vector
@@ -120,6 +120,7 @@ def perceptron(vectors: list) -> np.array:
 def find_margin(vectors: list, normal_vector: np.array) -> float:
     """Calculating the margin which is the minimum dot
     product between the normal_vector and all vectors"""
+    normalize(normal_vector)
     min_dot_product = np.dot(normal_vector, vectors[0][0])
     for vector in vectors:
         dot_product = np.dot(normal_vector, vector[0])
@@ -137,3 +138,7 @@ if __name__ == "__main__":
     margin = find_margin(vectors, normal_vector)
     print(f"The normal vector that cuts the points is: {normal_vector}")
     print(f"The margin of this vector is: {margin}")
+    f = open("output.txt", "w")
+    content = str(normal_vector)
+    f.write(content)
+    f.close()
